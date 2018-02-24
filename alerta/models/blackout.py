@@ -11,7 +11,7 @@ from alerta.utils.format import DateTime
 
 class Blackout(object):
 
-    def __init__(self, environment, **kwargs):
+    def __init__(self, environment: str, **kwargs):
         if not environment:
             raise ValueError('Missing mandatory value for "environment"')
 
@@ -62,7 +62,7 @@ class Blackout(object):
             self.remaining = 0
 
     @classmethod
-    def parse(cls, json):
+    def parse(cls, json: dict):
         if not isinstance(json.get('service', []), list):
             raise ValueError('service must be a list')
         if not isinstance(json.get('tags', []), list):

@@ -3,6 +3,7 @@ import os
 import platform
 import sys
 from datetime import datetime
+from typing import Optional
 from uuid import uuid4
 
 from flask import current_app
@@ -16,7 +17,7 @@ from alerta.utils.format import DateTime
 
 class Alert(object):
 
-    def __init__(self, resource, event, **kwargs):
+    def __init__(self, resource: str, event: str, **kwargs):
 
         if not resource:
             raise ValueError('Missing mandatory value for "resource"')
@@ -60,7 +61,7 @@ class Alert(object):
         self.history = kwargs.get('history', None) or list()
 
     @classmethod
-    def parse(cls, json):
+    def parse(cls, json: dict):
         if not isinstance(json.get('correlate', []), list):
             raise ValueError('correlate must be a list')
         if not isinstance(json.get('service', []), list):
@@ -126,10 +127,10 @@ class Alert(object):
             'history': [h.serialize for h in self.history]
         }
 
-    def get_id(self, short=False):
+    def get_id(self, short: bool = False):
         return self.id[:8] if short else self.id
 
-    def get_body(self, history=True):
+    def get_body(self, history: bool = True):
         body = self.serialize
         body.update({
             key: DateTime.iso8601(body[key]) for key in ['createTime', 'lastReceiveTime', 'receiveTime']
@@ -143,7 +144,7 @@ class Alert(object):
             self.id, self.environment, self.resource, self.event, self.severity, self.status, self.customer)
 
     @classmethod
-    def from_document(cls, doc):
+    def from_document(cls, doc: dict):
         return Alert(
             id=doc.get('id', None) or doc.get('_id'),
             resource=doc.get('resource', None),
@@ -175,7 +176,7 @@ class Alert(object):
         )
 
     @classmethod
-    def from_record(cls, rec):
+    def from_record(cls, rec: dict):
         return Alert(
             id=rec.id,
             resource=rec.resource,
@@ -219,7 +220,7 @@ class Alert(object):
     def is_correlated(self):
         return db.is_correlated(self)
 
-    def is_flapping(self, window=1800, count=2):
+    def is_flapping(self, window: int = 1800, count: int = 2):
         return db.is_flapping(self, window, count)
 
     # de-duplicate an alert
@@ -327,7 +328,7 @@ class Alert(object):
 
     # retrieve an alert
     @staticmethod
-    def find_by_id(id, customer=None):
+    def find_by_id(id, customer: Optional[str] = None):
         return Alert.from_db(db.get_alert(id, customer))
 
     def is_blackout(self):
@@ -336,7 +337,7 @@ class Alert(object):
         return db.is_blackout_period(self)
 
     # set alert status
-    def set_status(self, status, text=''):
+    def set_status(self, status: str, text: str = ''):
         history = History(
             id=self.id,
             event=self.event,
@@ -348,11 +349,11 @@ class Alert(object):
         return db.set_status(self.id, status, history)
 
     # tag an alert
-    def tag(self, tags):
+    def tag(self, tags: list):
         return db.tag_alert(self.id, tags)
 
     # untag an alert
-    def untag(self, tags):
+    def untag(self, tags: list):
         return db.untag_alert(self.id, tags)
 
     # update alert attributes
@@ -365,52 +366,52 @@ class Alert(object):
 
     # search alerts
     @staticmethod
-    def find_all(query=None, page=1, page_size=100):
+    def find_all(query: Optional[str] = None, page: int = 1, page_size: int = 100):
         return [Alert.from_db(alert) for alert in db.get_alerts(query, page, page_size)]
 
     # list alert history
     @staticmethod
-    def get_history(query=None, page=1, page_size=100):
+    def get_history(query: Optional[str] = None, page: int = 1, page_size: int = 100):
         return [RichHistory.from_db(hist) for hist in db.get_history(query, page, page_size)]
 
     # get total count
     @staticmethod
-    def get_count(query=None):
+    def get_count(query: Optional[str] = None):
         return db.get_count(query)
 
     # get severity counts
     @staticmethod
-    def get_counts_by_severity(query=None):
+    def get_counts_by_severity(query: Optional[str] = None):
         return db.get_counts_by_severity(query)
 
     # get status counts
     @staticmethod
-    def get_counts_by_status(query=None):
+    def get_counts_by_status(query: Optional[str] = None):
         return db.get_counts_by_status(query)
 
     # top 10 alerts
     @staticmethod
-    def get_top10_count(query=None):
+    def get_top10_count(query: Optional[str] = None):
         return db.get_topn_count(query)
 
     # top 10 flapping
     @staticmethod
-    def get_top10_flapping(query=None):
+    def get_top10_flapping(query: Optional[str] = None):
         return db.get_topn_flapping(query)
 
     # get environments
     @staticmethod
-    def get_environments(query=None):
+    def get_environments(query: Optional[str] = None):
         return db.get_environments(query)
 
     # get services
     @staticmethod
-    def get_services(query=None):
+    def get_services(query: Optional[str] = None):
         return db.get_services(query)
 
     # get tags
     @staticmethod
-    def get_tags(query=None):
+    def get_tags(query: Optional[str] = None):
         return db.get_tags(query)
 
     @staticmethod
