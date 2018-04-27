@@ -9,14 +9,10 @@ from alerta.auth.utils import is_authorized, create_token, get_customers
 from alerta.exceptions import ApiError
 from alerta.models.user import User
 from alerta.utils.api import absolute_url
-from . import auth
+from .. import auth
 
 import ldap
 
-@auth.route('/auth/signup', methods=['OPTIONS', 'POST'])
-@cross_origin(supports_credentials=True)
-def signup():
-    raise NotImplementedError
 
 @auth.route('/auth/login', methods=['OPTIONS', 'POST'])
 @cross_origin(supports_credentials=True)
@@ -33,7 +29,7 @@ def login():
 
     # Validate LDAP domain
     if not 'LDAP_DOMAINS' in current_app.config:
-        raise ApiError("LDAP_DOMAINS not configured", 500)
+        raise ApiError("LDAP_DOMAINS not configured", 400)
 
     if domain not in current_app.config["LDAP_DOMAINS"]:
         raise ApiError("unauthorized domain", 403)
@@ -48,15 +44,14 @@ def login():
     except ldap.INVALID_CREDENTIALS:
         raise ApiError("invalid username or password", 401)
 
-    except:
-        raise ApiError("logon failed", 500)
+    except Exception as e:
+        raise ApiError(str(e), 500)
 
     # Create user if not yet there
     user = User.find_by_email(email=email)
     if not user:
-        user = User(username, email, "", ["user"], "LDAP user")
+        user = User(username, email, "", ["user"], "LDAP user", email_verified=True)
         user.create()
-        user.set_email_verified()
 
     # Check user is active
     if user.status != 'active':
@@ -67,6 +62,6 @@ def login():
     user.update_last_login()
 
     # Generate token
-    token = create_token(user.id, user.name, user.email, provider='basic', customers=customers,
+    token = create_token(user.id, user.name, user.email, provider='ldap', customers=customers,
                          roles=user.roles, email=user.email, email_verified=user.email_verified)
     return jsonify(token=token.tokenize)

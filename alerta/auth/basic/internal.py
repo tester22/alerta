@@ -7,7 +7,7 @@ from flask_cors import cross_origin
 from alerta.auth.utils import is_authorized, create_token, get_customers, send_confirmation
 from alerta.exceptions import ApiError
 from alerta.models.user import User
-from . import auth
+from .. import auth
 
 
 @auth.route('/auth/signup', methods=['OPTIONS', 'POST'])

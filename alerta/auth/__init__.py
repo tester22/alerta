@@ -1,17 +1,18 @@
+
 from flask import Blueprint, request
 
 from alerta.exceptions import ApiError
 
-auth = Blueprint('auth', __name__) 
+auth = Blueprint('auth', __name__)
 
-def init_app(app):
-    from . import github, gitlab, google, keycloak, pingfederate, saml2, userinfo
-    
-    # If LDAP_SERVER is defined in config then use basic_ldap instead of basic to provide LDAP authentication
-    if "LDAP_SERVER" in app.config:
-        from . import basic_ldap
-    else:
-        from . import basic
+try:
+    import ldap
+    from .basic import ldap
+except ImportError:
+    from .basic import internal
+
+from . import github, gitlab, google, keycloak, pingfederate, saml2, userinfo
+
 
 @auth.before_request
 def only_json():
