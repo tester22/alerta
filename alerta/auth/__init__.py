@@ -7,7 +7,7 @@ auth = Blueprint('auth', __name__)
 
 try:
     import ldap
-    from .basic import ldap
+    from .basic import ldap_simple_bind
 except ImportError:
     from .basic import internal
 
