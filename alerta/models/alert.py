@@ -9,6 +9,7 @@ from flask import current_app
 
 from alerta.app import db, severity
 from alerta.models import status_code
+from alerta.models.lifecycle import default
 from alerta.models.history import History, RichHistory
 from alerta.utils.api import absolute_url
 from alerta.utils.format import DateTime
@@ -228,7 +229,7 @@ class Alert(object):
         now = datetime.utcnow()
 
         previous_status, previous_value = db.get_status_and_value(self)
-        self.status = status_code.status_from_severity(
+        self.status = default.status_from_severity(
             previous_severity=self.severity,
             current_severity=self.severity,
             previous_status=previous_status,
@@ -269,7 +270,7 @@ class Alert(object):
         previous_status = db.get_status(self)
         self.trend_indication = severity.trend(self.previous_severity, self.severity)
 
-        self.status = status_code.status_from_severity(
+        self.status = default.status_from_severity(
             previous_severity=self.previous_severity,
             current_severity=self.severity,
             previous_status=previous_status,
@@ -307,7 +308,7 @@ class Alert(object):
     # create an alert
     def create(self):
         if self.status == status_code.UNKNOWN:
-            self.status = status_code.status_from_severity(
+            self.status = default.status_from_severity(
                 previous_severity=current_app.config['DEFAULT_PREVIOUS_SEVERITY'],
                 current_severity=self.severity
             )

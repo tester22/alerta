@@ -1,7 +1,4 @@
 
-from alerta.app import severity
-from alerta.models import severity_code
-
 """
 Possible alert status codes.
 """
@@ -55,13 +52,3 @@ def parse_status(name):
     return NOT_VALID
 
 
-def status_from_severity(previous_severity, current_severity, previous_status=OPEN, current_status=UNKNOWN):
-    if current_severity in [severity_code.NORMAL, severity_code.CLEARED, severity_code.OK]:
-        return CLOSED
-    if current_status in [BLACKOUT, SHELVED]:
-        return current_status
-    if previous_status in [BLACKOUT, CLOSED, EXPIRED]:
-        return OPEN
-    if severity.trend(previous_severity, current_severity) == severity_code.MORE_SEVERE:
-        return OPEN
-    return previous_status
