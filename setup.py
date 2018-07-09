@@ -55,6 +55,9 @@ setuptools.setup(
         'console_scripts': [
             'alertad = alerta.commands:cli'
         ],
+        'alerta.actions': [
+            'gitlab = alerta.actions.gitlab:GitlabIssue'
+        ],
         'alerta.plugins': [
             'reject = alerta.plugins.reject:RejectPolicy',
             'blackout = alerta.plugins.blackout:BlackoutHandler'

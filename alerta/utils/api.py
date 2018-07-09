@@ -6,10 +6,11 @@ from os.path import join as path_join
 
 from flask import current_app, g, request
 
+from alerta.app import actions
 from alerta.app import plugins
 from alerta.exceptions import ApiError
 from alerta.exceptions import RejectException, RateLimit, BlackoutPeriod
-from alerta.models import actions
+from alerta.models import actions as action_code
 from alerta.models import status_code
 
 try:
@@ -116,23 +117,31 @@ def process_alert(alert):
     return alert
 
 
-def process_action(alert, action):
+def process_action(alert, action, text):
+
+    for a in actions.actions.values():
+        try:
+            attributes = a.take_action(alert, action, text)
+            alert.update_attributes(attributes)
+        except Exception as e:
+            raise ApiError("Error while running action '%s': %s" % (action.name, str(e)))
+
     severity = alert.severity
     status = alert.status
 
-    if action == actions.ACTION_UNACK:
+    if action == action_code.ACTION_UNACK:
         status = status_code.OPEN
 
-    if action == actions.ACTION_SHELVE:
+    if action == action_code.ACTION_SHELVE:
         status = status_code.SHELVED
 
-    if action == actions.ACTION_UNSHELVE:
+    if action == action_code.ACTION_UNSHELVE:
         status = status_code.OPEN
 
-    if action == actions.ACTION_ACK:
+    if action == action_code.ACTION_ACK:
         status = status_code.ACK
 
-    if action == actions.ACTION_CLOSE:
+    if action == action_code.ACTION_CLOSE:
         severity = current_app.config['DEFAULT_NORMAL_SEVERITY']
         status = status_code.CLOSED
 
