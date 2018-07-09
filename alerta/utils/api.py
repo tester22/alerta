@@ -119,33 +119,20 @@ def process_alert(alert):
 
 def process_action(alert, action, text):
 
+    updated = None
     for enabled_action in actions.actions.values():
         try:
-            attributes = enabled_action.take_action(alert, action, text)
+            updated = enabled_action.take_action(alert, action, text)
         except Exception as e:
             raise ApiError("Error while running action '%s': %s" % (enabled_action.name, str(e)))
-        alert.update_attributes(attributes)
+        if updated:
+            alert = updated
 
-    severity = alert.severity
-    status = alert.status
+    if updated:
+        alert.tag(alert.tags)
+        alert.update_attributes(alert.attributes)
 
-    if action == action_code.ACTION_UNACK:
-        status = status_code.OPEN
-
-    if action == action_code.ACTION_SHELVE:
-        status = status_code.SHELVED
-
-    if action == action_code.ACTION_UNSHELVE:
-        status = status_code.OPEN
-
-    if action == action_code.ACTION_ACK:
-        status = status_code.ACK
-
-    if action == action_code.ACTION_CLOSE:
-        severity = current_app.config['DEFAULT_NORMAL_SEVERITY']
-        status = status_code.CLOSED
-
-    return severity, status
+    return alert.severity, alert.status
 
 
 def process_status(alert, status, text):

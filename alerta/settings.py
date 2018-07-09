@@ -107,7 +107,7 @@ SMTP_USERNAME = ''  # application-specific username if different to MAIL_FROM us
 SMTP_PASSWORD = ''  # password for MAIL_FROM (or SMTP_USERNAME if used)
 
 # Actions
-ACTIONS = ['gitlab']
+ACTIONS = ['default', 'gitlab']
 
 # Plug-ins
 PLUGINS = ['reject', 'blackout']

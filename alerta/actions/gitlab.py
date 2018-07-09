@@ -23,9 +23,9 @@ class GitlabIssue(ActionBase):
             url = '%s/projects/%s/issues?title=foo' % (GITLAB_URL, GITLAB_PROJECT_ID)
             r = requests.post(url, headers={'Private-Token': GITLAB_ACCESS_TOKEN})
             print(r.json())
-            # FIXME - store issue ID somewhere
-            issue_id = r.json().get('id', 'zzz')
-            return {'actionId': issue_id}
+            issue_id = r.json().get('id', None)
+            alert.attributes = {'actionId': issue_id}
+            return alert
         else:
             print('action ignored by gitlab action handler')
         return
