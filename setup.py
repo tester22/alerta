@@ -56,6 +56,7 @@ setuptools.setup(
             'alertad = alerta.commands:cli'
         ],
         'alerta.actions': [
+            'default = alerta.actions.default:UserActions',
             'gitlab = alerta.actions.gitlab:GitlabIssue'
         ],
         'alerta.plugins': [
