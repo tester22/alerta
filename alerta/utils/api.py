@@ -119,12 +119,12 @@ def process_alert(alert):
 
 def process_action(alert, action, text):
 
-    for a in actions.actions.values():
+    for enabled_action in actions.actions.values():
         try:
-            attributes = a.take_action(alert, action, text)
-            alert.update_attributes(attributes)
+            attributes = enabled_action.take_action(alert, action, text)
         except Exception as e:
-            raise ApiError("Error while running action '%s': %s" % (action.name, str(e)))
+            raise ApiError("Error while running action '%s': %s" % (enabled_action.name, str(e)))
+        alert.update_attributes(attributes)
 
     severity = alert.severity
     status = alert.status
@@ -151,18 +151,18 @@ def process_action(alert, action, text):
 def process_status(alert, status, text):
 
     updated = None
-    for plugin in plugins.routing(alert):
+    for enabled_plugin in plugins.routing(alert):
         if alert.status == status_code.BLACKOUT:
             break
         try:
-            updated = plugin.status_change(alert, status, text)
+            updated = enabled_plugin.status_change(alert, status, text)
         except RejectException:
             raise
         except Exception as e:
             if current_app.config['PLUGINS_RAISE_ON_ERROR']:
-                raise ApiError("Error while running status plug-in '%s': %s" % (plugin.name, str(e)))
+                raise ApiError("Error while running status plug-in '%s': %s" % (enabled_plugin.name, str(e)))
             else:
-                logging.error("Error while running status plug-in '%s': %s" % (plugin.name, str(e)))
+                logging.error("Error while running status plug-in '%s': %s" % (enabled_plugin.name, str(e)))
         if updated:
             try:
                 alert, status, text = updated
