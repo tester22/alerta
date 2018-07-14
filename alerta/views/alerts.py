@@ -10,7 +10,7 @@ from alerta.exceptions import ApiError, RejectException, RateLimit, BlackoutPeri
 from alerta.models.alert import Alert
 from alerta.models.metrics import Timer, timer
 from alerta.models.switch import Switch
-from alerta.utils.api import jsonp, process_alert, process_status, process_action, assign_customer, add_remote_ip
+from alerta.utils.api import jsonp, process_alert, process_status, process_action, assign_customer, add_remote_ip, list_action
 from alerta.utils.paging import Page
 from . import api
 
@@ -111,8 +111,9 @@ def set_status(alert_id):
 @jsonp
 def action_alert(alert_id):
     action = request.json.get('action', None)
-    text = request.json.get('text', '%s operator action' % action)
+    text = request.json.get('text', None)
     timeout = request.json.get('timeout', None)
+    attributes = request.json.get('attributes', {})
 
     if not action:
         raise ApiError("must supply 'action' as json data")
@@ -124,7 +125,7 @@ def action_alert(alert_id):
         raise ApiError("not found", 404)
 
     try:
-        severity, status = process_action(alert, action, text)
+        severity, status = process_action(alert, action, text, attributes)
         if alert.status != status:
             alert, status, text = process_status(alert, status, text)
     except RejectException as e:
@@ -137,6 +138,16 @@ def action_alert(alert_id):
     else:
         raise ApiError("failed to perform alert action", 500)
 
+@api.route('/alert/<alert_id>/action', methods=['OPTIONS', 'GET'])
+@cross_origin()
+@permission('read:alerts')
+@timer(gets_timer)
+@jsonp
+def list_actions(alert_id):
+    customers = g.get('customers', None)
+    alert = Alert.find_by_id(alert_id, customers)
+    return jsonify(list_action(alert)
+    )
 
 # tag
 @api.route('/alert/<alert_id>/tag', methods=['OPTIONS', 'PUT'])

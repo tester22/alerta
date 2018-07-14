@@ -117,12 +117,12 @@ def process_alert(alert):
     return alert
 
 
-def process_action(alert, action, text):
+def process_action(alert, action, text, attributes):
 
     updated = None
     for enabled_action in actions.actions.values():
         try:
-            updated = enabled_action.take_action(alert, action, text)
+            updated = enabled_action.take_action(alert, action, text, attributes)
         except Exception as e:
             raise ApiError("Error while running action '%s': %s" % (enabled_action.name, str(e)))
         if updated:
@@ -133,6 +133,15 @@ def process_action(alert, action, text):
         alert.update_attributes(alert.attributes)
 
     return alert.severity, alert.status
+
+def list_action(alert):
+
+    updated = None
+    action_list = []
+    for enabled_action in actions.actions.values():
+        action_list.append(enabled_action.get_fields(alert))
+
+    return action_list
 
 
 def process_status(alert, status, text):
